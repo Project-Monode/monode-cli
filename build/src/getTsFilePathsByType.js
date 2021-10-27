@@ -3,7 +3,9 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.getTsFilePathsByType = void 0;
 const fs = require("fs");
 const path = require("path");
-const FILES_TO_IGNORE = [];
+const FILES_TO_IGNORE = [
+    `node_modules`,
+];
 /// Gets all the Typescript files in a directory and sorts them by their cloud type something.cloudTypeName.ts
 const getTsFilePathsByType = function (relativePath) {
     if (relativePath === null || relativePath === undefined) {

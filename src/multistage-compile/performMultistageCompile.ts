@@ -27,7 +27,7 @@ export async function performMultistageCompile(args: {
   fs.writeFileSync(`${args.relativePath}/mnd_temp_build/index-getCloudTypes.js`, getCloudTypes_File);
 
   // Update package.json
-  let packageJson = JSON.parse(fs.readFileSync(`${args.relativePath}/package.json`).toString())
+  let packageJson = JSON.parse(fs.readFileSync(`${args.relativePath}/package.json`).toString());
   const oldMain = packageJson.main;
   packageJson.main = `${args.relativePath}/mnd_temp_build/index-getCloudTypes.js`;
   fs.writeFileSync(`${args.relativePath}/package.json`, JSON.stringify(packageJson));

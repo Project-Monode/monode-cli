@@ -2,6 +2,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 
 const FILES_TO_IGNORE: string[] = [
+  `node_modules`,
 ];
 
 
