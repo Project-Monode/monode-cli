@@ -23,10 +23,10 @@ for (let i in FILES_BY_FILE_TYPE[CLOUD_TYPE_NAME]) {
       }
     }
     // @ts-ignore
-    logs += ` - Read cloud type for "${FILES_BY_FILE_TYPE[CLOUD_TYPE_NAME][i]}".\n`;
+    logs += ` + Cloud Type: "${FILES_BY_FILE_TYPE[CLOUD_TYPE_NAME][i]}".\n`;
   } catch(e: any) {
     // @ts-ignore
-    logs += ` - Error reading in cloud type "${FILES_BY_FILE_TYPE[CLOUD_TYPE_NAME][i]}": ${e.toString()}\n`;
+    logs += ` ! ERROR when reading in cloud type "${FILES_BY_FILE_TYPE[CLOUD_TYPE_NAME][i]}": ${e.toString()}\n`;
   }
 }
 
@@ -58,10 +58,10 @@ for (let cloudTypeName in cloudTypeConfigByName) {
         }
       }
       // @ts-ignore
-      logs += ` - Read cloud component config for "${FILES_BY_FILE_TYPE[cloudTypeName][pathIndex]}".\n`;
+      logs += ` + Cloud Component: "${FILES_BY_FILE_TYPE[cloudTypeName][pathIndex]}".\n`;
     } catch(e: any) {
       // @ts-ignore
-      logs += ` - Error reading in cloud component config "${FILES_BY_FILE_TYPE[cloudTypeName][pathIndex]}": ${e.toString()}\n`;
+      logs += ` ! ERROR when reading in cloud component config "${FILES_BY_FILE_TYPE[cloudTypeName][pathIndex]}": ${e.toString()}\n`;
     }
   }
 }
