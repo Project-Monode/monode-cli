@@ -1,10 +1,9 @@
 "use strict";
-var _a, _b, _c;
+var _a, _b, _c, _d;
 Object.defineProperty(exports, "__esModule", { value: true });
 const fs = require("fs");
 const CLOUD_TYPE_NAME = 'cloudtype';
-const MANAGED_BY_KEY = 'managedBy';
-const MANAGED_BY_VALUE = 'monode';
+const MANAGED_BY_MONODE_TAG = 'MONODE';
 const trimTsExtension = function (tsFilePath) {
     return tsFilePath.substring(0, tsFilePath.length - 3);
 };
@@ -34,6 +33,7 @@ const allCloudFormationExports = {
     functions: {},
     resources: {},
 };
+let lambdaHandlers_file = ``;
 // Read in all cloud config from project files
 for (let cloudTypeName in cloudTypeConfigByName) {
     // @ts-ignore
@@ -48,6 +48,7 @@ for (let cloudTypeName in cloudTypeConfigByName) {
                 // Copy functions
                 for (let functionName in newCloudFormationExports === null || newCloudFormationExports === void 0 ? void 0 : newCloudFormationExports.functions) {
                     allCloudFormationExports.functions[functionName] = newCloudFormationExports === null || newCloudFormationExports === void 0 ? void 0 : newCloudFormationExports.functions[functionName];
+                    lambdaHandlers_file += (_d = cloudTypeExports === null || cloudTypeExports === void 0 ? void 0 : cloudTypeExports.default) === null || _d === void 0 ? void 0 : _d.buildHandlerEntry({ functionName: functionName, filePath: filePath });
                 }
                 // Copy resources
                 for (let resourceName in newCloudFormationExports === null || newCloudFormationExports === void 0 ? void 0 : newCloudFormationExports.resources) {
@@ -68,19 +69,42 @@ let serverlessConfig = JSON.parse(fs.readFileSync(`../serverless-project/serverl
 // Delete the old cloud resources
 let resourcesToDelete = [];
 for (let resourceName in serverlessConfig.resources.Resources) {
-    if (serverlessConfig.resources.Resources[resourceName][MANAGED_BY_KEY] == MANAGED_BY_VALUE) {
+    if (resourceName.startsWith(MANAGED_BY_MONODE_TAG)) {
         resourcesToDelete.push(resourceName);
     }
 }
 for (let resourceName in resourcesToDelete) {
     delete serverlessConfig.resources.Resources[resourceName];
 }
+let functionsToDelete = [];
+for (let functionName in serverlessConfig.functions) {
+    if (functionName.startsWith(MANAGED_BY_MONODE_TAG)) {
+        functionsToDelete.push(functionName);
+    }
+}
+for (let functionName in functionsToDelete) {
+    delete serverlessConfig.functions[functionName];
+}
 // Add the new resources
 for (let resourceName in allCloudFormationExports === null || allCloudFormationExports === void 0 ? void 0 : allCloudFormationExports.resources) {
-    let newResource = allCloudFormationExports === null || allCloudFormationExports === void 0 ? void 0 : allCloudFormationExports.resources[resourceName];
-    newResource[MANAGED_BY_KEY] = MANAGED_BY_VALUE;
-    serverlessConfig.resources.Resources[resourceName] = newResource;
+    serverlessConfig.resources.Resources[`${MANAGED_BY_MONODE_TAG}${resourceName}`]
+        = allCloudFormationExports === null || allCloudFormationExports === void 0 ? void 0 : allCloudFormationExports.resources[resourceName];
+}
+for (let functionName in allCloudFormationExports === null || allCloudFormationExports === void 0 ? void 0 : allCloudFormationExports.functions) {
+    let newFunction = allCloudFormationExports === null || allCloudFormationExports === void 0 ? void 0 : allCloudFormationExports.functions[functionName];
+    newFunction.handler = `mnd_lambda_handlers.${functionName}`;
+    newFunction.package = {
+        artifact: `mnd_functions.zip`,
+        individually: true,
+        exclude: [
+            "*/**"
+        ],
+        include: []
+    };
+    serverlessConfig.functions[`${MANAGED_BY_MONODE_TAG}${functionName}`] = newFunction;
 }
 fs.writeFileSync(`../serverless-project/serverless.json`, JSON.stringify(serverlessConfig, null, 2));
+// Export the lambda handlers file
+fs.writeFileSync(`${__dirname}/mnd_lambda_handlers.js`, lambdaHandlers_file);
 // Write the logs
 fs.writeFileSync(`${__dirname}/mnd_compile_logs.txt`, logs);

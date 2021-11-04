@@ -1,17 +1,13 @@
 #!/usr/bin/env node
 
-/* TODO: Run command -v or something like that on all dependencies, and notify
- * the user if any of them are not installed. */
-// Make "tke add" add chunks to existing projects
-
 // Dependencies
 const CLI_VERSION = "0.0.0";
 import { program } from 'commander';
-//import * as TsNode from 'ts-node';
-import * as fs from 'fs';
 import { performMultistageCompile } from './src/multistage-compile/performMultistageCompile';
-//TsNode.create().compile(fs.readFileSync('./src/test.ts').toString(), 'test.ts')
+import { runCmdAsync } from './src/utils/run-cmd';
+import * as path from 'path';
 
+// CLI Definition
 program.version(CLI_VERSION, "-v", "Output the version number")
   .description("Performs a number of common Monode operations.");
 program.command("compile [path-to-project-root]")
@@ -20,5 +16,18 @@ program.command("compile [path-to-project-root]")
     await performMultistageCompile({
       relativePath: pathToProjectRoot ?? './',
     });
+  });
+program.command("deploy [path-to-project-root]")
+  .description("Deploy a monode project to AWS through serverless. Default path is \"./\"")
+  .action(async function(pathToProjectRoot?: string) {
+    pathToProjectRoot = pathToProjectRoot ?? './';
+    await performMultistageCompile({
+      relativePath: pathToProjectRoot,
+    });
+    await runCmdAsync({
+      command: 'serverless deploy',
+      path: path.resolve(pathToProjectRoot, '../serverless-project'),
+      shouldPrintLogs: true,
+    })
   });
 program.parse(process.argv);
