@@ -4,6 +4,7 @@
     "target": "ES2017",
     "watch": true,
     "strict": true,
+    "declaration": true,
     "experimentalDecorators": true,
     "outDir": "./build",
     //"plugins": [{ "transform": "./src/transformers/transformer.ts" }],
