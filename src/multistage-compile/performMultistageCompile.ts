@@ -4,12 +4,22 @@ import { getTsFilePathsByType } from '../getTsFilePathsByType';
 import * as TsNode from 'ts-node';
 import { runCmdAsync } from '../utils/run-cmd';
 import { zipDir } from '../utils/zipDir';
+import { MonodeConfig } from '../utils/MonodeConfig';
 
 export const CLOUD_TYPE_NAME = 'cloudtype';
 
 export async function performMultistageCompile(args: {
   relativePath: string,
 }) {
+  // Read in the Monode config
+  let monodeConfig;
+  try {
+    monodeConfig = JSON.parse(fs.readFileSync(`${args.relativePath}/monode.json`).toString()) as MonodeConfig;
+  } catch(e: any) {
+    console.log(`Could not find or could not parse "monode.json".`);
+    return;
+  }
+
   // Update tsconfig.json
   const originalTsconfigFileContents = fs.readFileSync(`${args.relativePath}/tsconfig.json`);
   let tempTsconfigJson = JSON.parse(originalTsconfigFileContents.toString());
@@ -51,9 +61,15 @@ export async function performMultistageCompile(args: {
   if (fs.existsSync(`${args.relativePath}/mnd_temp_build/package-lock.json`)) {
     fs.unlinkSync(`${args.relativePath}/mnd_temp_build/package-lock.json`);
   }
+  const zipOutputPath = path.resolve(
+    path.resolve(`./`, monodeConfig.relativeServerlessPath),
+    `mnd_functions.zip`,
+  );
+  console.log(monodeConfig.relativeServerlessPath);
+  console.log(zipOutputPath);
   await zipDir({
     inputPath: `${args.relativePath}/mnd_temp_build`,
-    outputPath: path.resolve(args.relativePath, `../serverless-project/mnd_functions.zip`),
+    outputPath: path.resolve(args.relativePath, zipOutputPath),
   });
 
   // Undo all changes
