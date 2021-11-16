@@ -1,0 +1,21 @@
+{
+  "compilerOptions": {
+    "module": "CommonJS",
+    "target": "ES2017",
+    "watch": false,
+    "strict": true,
+    "experimentalDecorators": true,
+    "outDir": "./mnd_temp_build/src",
+    "plugins": [],
+    "moduleResolution": "node"
+  },
+  "include": [
+    "src/**/*",
+    "serverless.json"
+  ],
+  "exclude": [
+    ".vscode/**/*",
+    "node_modules",
+    "**/*.spec.ts"
+  ]
+}

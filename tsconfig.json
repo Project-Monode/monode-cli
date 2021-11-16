@@ -7,9 +7,8 @@
     "declaration": true,
     "experimentalDecorators": true,
     "outDir": "./build",
-    //"plugins": [{ "transform": "./src/transformers/transformer.ts" }],
     "moduleResolution": "node"
   },
   "include": ["src/**/*", "index.ts", ".vscode/templates/Class.ts"],
-  "exclude": ["node_modules", "**/*.spec.ts" ] //"./src/transformers/**/*"
+  "exclude": ["node_modules", "**/*.spec.ts", "./src/init/templates/**/*" ]
 }
