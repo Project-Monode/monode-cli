@@ -1,4 +1,4 @@
-import { CloudType } from 'monode-serverless';
+import { CloudType, buildResourceName } from 'monode-serverless';
 import * as AWS from 'aws-sdk';
 
 /// This is how S3s will be defined
@@ -7,7 +7,7 @@ export const S3 = CloudType.defineNew({
   defineNew(args: {
     bucketLabel: string
   }) {
-    const bucketName = `multi-compile-sandbox-dev-${args.bucketLabel}`;
+    const bucketName = buildResourceName(args.bucketLabel);
     return {
       cloudFormationExports: {
         functions: { },

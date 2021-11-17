@@ -1,4 +1,4 @@
-import { CloudType } from 'monode-serverless';
+import { CloudType, buildResourceName } from 'monode-serverless';
 
 /// This is how StaticWebsiteHosts will be defined
 export const StaticWebsiteHost = CloudType.defineNew({
@@ -14,7 +14,7 @@ export const StaticWebsiteHost = CloudType.defineNew({
             "Type": "AWS::S3::Bucket",
             "Properties": {
               "AccessControl": "PublicRead",
-              "BucketName": "${self:service}-${self:provider.stage}-whb",
+              "BucketName": buildResourceName('whb'),
               [`${args.hostingLabel}Configuration`]: {
                 "IndexDocument": "index.html"
               }

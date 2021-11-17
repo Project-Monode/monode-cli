@@ -38,6 +38,9 @@ async function performMultistageCompile(args) {
     getCloudTypes_File = `const FILES_BY_FILE_TYPE = ${JSON.stringify(filePathsByFileType)};\n${getCloudTypes_File.substring(getCloudTypes_File.indexOf('\n'), getCloudTypes_File.length)}`;
     const serverlessJsonPath = path.resolve(serverlessPathAbsolute, `serverless.json`);
     getCloudTypes_File = `const SERVERLESS_PATH = ${JSON.stringify(serverlessJsonPath)};\n` + getCloudTypes_File;
+    const serverlessConfig = JSON.parse(fs.readFileSync(serverlessJsonPath).toString());
+    getCloudTypes_File = `process.env.service = "${serverlessConfig.service}"\n` + getCloudTypes_File;
+    getCloudTypes_File = `process.env.stage = "${serverlessConfig.provider.stage}"\n` + getCloudTypes_File;
     fs.writeFileSync(`${args.relativePath}/mnd_temp_build/mnd-index.js`, getCloudTypes_File);
     await (0, run_cmd_1.runCmdAsync)({ command: `tsc` });
     await (0, run_cmd_1.runCmdAsync)({ command: `node .` });

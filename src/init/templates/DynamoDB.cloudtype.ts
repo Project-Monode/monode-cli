@@ -1,4 +1,4 @@
-import { CloudType } from 'monode-serverless';
+import { CloudType, buildResourceName } from 'monode-serverless';
 import * as AWS from 'aws-sdk';
 
 /// These are the types that DynamoDB allows to be table keys
@@ -69,7 +69,7 @@ export const DynamoDB = CloudType.defineNew({
             }
           ],
           "BillingMode": "PAY_PER_REQUEST",
-          "TableName": `test-project-dev-${args.tableName}`,
+          "TableName": buildResourceName(args.tableName),
         }
       }
     }
@@ -92,10 +92,9 @@ export const DynamoDB = CloudType.defineNew({
       },
       put: async function(item: Schema) {
         return await (new AWS.DynamoDB.DocumentClient().put({
-          TableName : "test-project-dev-" + args.tableName,
+          TableName : buildResourceName(args.tableName),
           Item: item,
         }).promise());
-        //return "test-project-dev-" + args.tableName;
       }
     };
   }
