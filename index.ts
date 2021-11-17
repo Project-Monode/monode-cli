@@ -3,8 +3,10 @@
 // Dependencies
 const CLI_VERSION = "0.0.0";
 import { program } from 'commander';
-import { performMultistageCompile } from './src/multistage-compile/performMultistageCompile';
 import { performInit } from './src/init/performInit';
+import { performMultistageCompile } from './src/multistage-compile/performMultistageCompile';
+import { cloneDirectroyStructure } from './src/utils/cloneDirectroyStructure';
+import { getFileDependencies } from './src/utils/getFileDependencies';
 
 // CLI Definition
 program.version(CLI_VERSION, "-v", "Output the version number")
@@ -20,5 +22,14 @@ program.command("init")
   .description("Creates a Monode project in the current directory.")
   .action(async function() {
     performInit();
+  });
+program.command("temp")
+  .description("Creates a Monode project in the current directory.")
+  .action(async function() {
+    cloneDirectroyStructure('./src', './tempSrc');
+    /*console.log(getFileDependencies({
+      sourceFilePath: 'test.ts',
+      allDependencies: [],
+    }));*/
   });
 program.parse(process.argv);
