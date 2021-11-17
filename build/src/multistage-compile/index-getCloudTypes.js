@@ -64,8 +64,9 @@ for (let cloudTypeName in cloudTypeConfigByName) {
         }
     }
 }
+// @ts-ignore
 // Read in the serverless config
-let serverlessConfig = JSON.parse(fs.readFileSync(`../serverless-project/serverless.json`).toString());
+let serverlessConfig = JSON.parse(fs.readFileSync(SERVERLESS_PATH).toString());
 // Delete the old cloud resources
 let resourcesToDelete = [];
 for (let resourceName in serverlessConfig.resources.Resources) {
@@ -73,8 +74,8 @@ for (let resourceName in serverlessConfig.resources.Resources) {
         resourcesToDelete.push(resourceName);
     }
 }
-for (let resourceName in resourcesToDelete) {
-    delete serverlessConfig.resources.Resources[resourceName];
+for (let i in resourcesToDelete) {
+    delete serverlessConfig.resources.Resources[resourcesToDelete[i]];
 }
 let functionsToDelete = [];
 for (let functionName in serverlessConfig.functions) {
@@ -103,7 +104,8 @@ for (let functionName in allCloudFormationExports === null || allCloudFormationE
     };
     serverlessConfig.functions[`${MANAGED_BY_MONODE_TAG}${functionName}`] = newFunction;
 }
-fs.writeFileSync(`../serverless-project/serverless.json`, JSON.stringify(serverlessConfig, null, 2));
+// @ts-ignore
+fs.writeFileSync(SERVERLESS_PATH, JSON.stringify(serverlessConfig, null, 2));
 // Export the lambda handlers file
 fs.writeFileSync(`${__dirname}/mnd_lambda_handlers.js`, lambdaHandlers_file);
 // Write the logs

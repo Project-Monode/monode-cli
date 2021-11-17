@@ -17,6 +17,7 @@ async function performMultistageCompile(args) {
         console.log(`Could not find or could not parse "monode.json".`);
         return;
     }
+    const serverlessPathAbsolute = path.resolve(`./`, monodeConfig.relativeServerlessPath);
     // Update tsconfig.json
     const originalTsconfigFileContents = fs.readFileSync(`${args.relativePath}/tsconfig.json`);
     let tempTsconfigJson = JSON.parse(originalTsconfigFileContents.toString());
@@ -35,6 +36,8 @@ async function performMultistageCompile(args) {
     const filePathsByFileType = (0, getTsFilePathsByType_1.getTsFilePathsByType)(args.relativePath);
     let getCloudTypes_File = fs.readFileSync(`${__dirname}/index-getCloudTypes.js`).toString();
     getCloudTypes_File = `const FILES_BY_FILE_TYPE = ${JSON.stringify(filePathsByFileType)};\n${getCloudTypes_File.substring(getCloudTypes_File.indexOf('\n'), getCloudTypes_File.length)}`;
+    const serverlessJsonPath = path.resolve(serverlessPathAbsolute, `serverless.json`);
+    getCloudTypes_File = `const SERVERLESS_PATH = ${JSON.stringify(serverlessJsonPath)};\n` + getCloudTypes_File;
     fs.writeFileSync(`${args.relativePath}/mnd_temp_build/mnd-index.js`, getCloudTypes_File);
     await (0, run_cmd_1.runCmdAsync)({ command: `tsc` });
     await (0, run_cmd_1.runCmdAsync)({ command: `node .` });
@@ -52,9 +55,7 @@ async function performMultistageCompile(args) {
     if (fs.existsSync(`${args.relativePath}/mnd_temp_build/package-lock.json`)) {
         fs.unlinkSync(`${args.relativePath}/mnd_temp_build/package-lock.json`);
     }
-    const zipOutputPath = path.resolve(path.resolve(`./`, monodeConfig.relativeServerlessPath), `mnd_functions.zip`);
-    console.log(monodeConfig.relativeServerlessPath);
-    console.log(zipOutputPath);
+    const zipOutputPath = path.resolve(serverlessPathAbsolute, `mnd_functions.zip`);
     await (0, zipDir_1.zipDir)({
         inputPath: `${args.relativePath}/mnd_temp_build`,
         outputPath: path.resolve(args.relativePath, zipOutputPath),
