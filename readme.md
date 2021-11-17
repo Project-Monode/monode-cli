@@ -12,4 +12,4 @@ Call using `$ mnd` or `$ monode`.
  - [Click here for documentation on using the Monode library.](https://www.npmjs.com/package/monode-serverless)
 
 ### External Dependencies
- - The Monode CLI depends on the `npm` and `node` CLIs.
+ - The Monode CLI depends on the `npx`, `npm`, and `node` CLIs.
