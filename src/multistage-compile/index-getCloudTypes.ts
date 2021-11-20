@@ -22,7 +22,7 @@ for (let i in FILES_BY_FILE_TYPE[CLOUD_TYPE_NAME]) {
       }
     }
     // @ts-ignore
-    logs += ` + Cloud Type: "${FILES_BY_FILE_TYPE[CLOUD_TYPE_NAME][i]}".\n`;
+    logs += ` x Cloud Type: "${FILES_BY_FILE_TYPE[CLOUD_TYPE_NAME][i]}".\n`;
   } catch(e: any) {
     // @ts-ignore
     logs += ` ! ERROR when reading in cloud type "${FILES_BY_FILE_TYPE[CLOUD_TYPE_NAME][i]}": ${e.toString()}\n`;
@@ -33,7 +33,7 @@ const allCloudFormationExports = {
   functions: ({} as any),
   resources: ({} as any),
 }
-let lambdaHandlers_file = ``;
+let lambdaHandlers_file = `process.env.service = \"${process.env.service}\";\nprocess.env.stage = \"${process.env.stage}\";\n`;
 
 // Read in all cloud config from project files
 for (let cloudTypeName in cloudTypeConfigByName) {
@@ -89,8 +89,8 @@ for (let functionName in serverlessConfig.functions) {
     functionsToDelete.push(functionName);
   }
 }
-for (let functionName in functionsToDelete) {
-  delete serverlessConfig.functions[functionName];
+for (let i in functionsToDelete) {
+  delete serverlessConfig.functions[functionsToDelete[i]];
 }
 
 // Add the new resources

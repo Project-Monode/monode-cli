@@ -1,4 +1,4 @@
-import { CloudType } from 'monode-serverless';
+import { CloudType, buildResourceName } from 'monode-serverless';
 
 /// This is how lambda functions will be defined
 export const Lambda = CloudType.defineNew({
@@ -7,7 +7,7 @@ export const Lambda = CloudType.defineNew({
   defineNew<ParamType, ReturnType>(args: {
     functionName: string,
     triggers: string[],
-    function: (args: ParamType) => ReturnType,
+    function: (args: ParamType) => Promise<LambdaHttpResponse<ReturnType>>,
   }) {
     return {
       function: args.function,
@@ -15,6 +15,7 @@ export const Lambda = CloudType.defineNew({
         functions: {
           [args.functionName]: {
             handler: undefined,
+            name: buildResourceName(args.functionName),
             events:[
               {
                 http:{
@@ -34,15 +35,22 @@ export const Lambda = CloudType.defineNew({
   let result = await require('${args.filePath}').default.function(event);
   return {
     headers: {
-      'Content-Type': 'application/jason',
+      'Content-Type': 'application/json',
       'Access-Control-Allow-Methods': '*',
       'Access-Control-Allow-Origin': '*',
     },
-    statusCode: 200,
-    body: JSON.stringify(result)
+    statusCode: result.statusCode,
+    body: JSON.stringify(result.body)
   };
 };\n`;
       }
     };
   }
 });
+
+
+
+export interface LambdaHttpResponse<BodyType> {
+  statusCode: number,
+  body: BodyType,
+}

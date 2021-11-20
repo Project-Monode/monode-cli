@@ -35,10 +35,6 @@ async function performInit() {
         relativeSourceFilePath: `./templates/S3.cloudtype.ts`,
         relativeExportPath: `./src/cloud-types/S3.cloudtype.ts`,
     });
-    cloneSourceFile({
-        relativeSourceFilePath: `./templates/StaticWebsiteHost.cloudtype.ts`,
-        relativeExportPath: `./src/cloud-types/StaticWebsiteHost.cloudtype.ts`,
-    });
     (0, run_cmd_1.runCmdAsync)({ command: 'npm i --save' });
 }
 exports.performInit = performInit;

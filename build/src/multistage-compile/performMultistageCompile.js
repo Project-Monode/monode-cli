@@ -17,7 +17,7 @@ async function performMultistageCompile(args) {
         console.log(`Could not find or could not parse "monode.json".`);
         return;
     }
-    const serverlessPathAbsolute = path.resolve(`./`, monodeConfig.relativeServerlessPath);
+    const serverlessPathAbsolute = path.resolve(path.resolve(`./`, args.relativePath), monodeConfig.relativeServerlessPath);
     // Update tsconfig.json
     const originalTsconfigFileContents = fs.readFileSync(`${args.relativePath}/tsconfig.json`);
     let tempTsconfigJson = JSON.parse(originalTsconfigFileContents.toString());
@@ -34,16 +34,22 @@ async function performMultistageCompile(args) {
     fs.writeFileSync(`${args.relativePath}/package.json`, JSON.stringify(tempPackageJson));
     // Extract cloud config
     const filePathsByFileType = (0, getTsFilePathsByType_1.getTsFilePathsByType)(args.relativePath);
+    for (let fileType in filePathsByFileType) {
+        for (let i in filePathsByFileType[fileType]) {
+            filePathsByFileType[fileType][i] = `.` + filePathsByFileType[fileType][i].substring(args.relativePath.length, filePathsByFileType[fileType][i].length);
+        }
+    }
     let getCloudTypes_File = fs.readFileSync(`${__dirname}/index-getCloudTypes.js`).toString();
     getCloudTypes_File = `const FILES_BY_FILE_TYPE = ${JSON.stringify(filePathsByFileType)};\n${getCloudTypes_File.substring(getCloudTypes_File.indexOf('\n'), getCloudTypes_File.length)}`;
     const serverlessJsonPath = path.resolve(serverlessPathAbsolute, `serverless.json`);
     getCloudTypes_File = `const SERVERLESS_PATH = ${JSON.stringify(serverlessJsonPath)};\n` + getCloudTypes_File;
+    console.log(serverlessJsonPath);
     const serverlessConfig = JSON.parse(fs.readFileSync(serverlessJsonPath).toString());
     getCloudTypes_File = `process.env.service = "${serverlessConfig.service}"\n` + getCloudTypes_File;
     getCloudTypes_File = `process.env.stage = "${serverlessConfig.provider.stage}"\n` + getCloudTypes_File;
     fs.writeFileSync(`${args.relativePath}/mnd_temp_build/mnd-index.js`, getCloudTypes_File);
-    await (0, run_cmd_1.runCmdAsync)({ command: `npx tsc` });
-    await (0, run_cmd_1.runCmdAsync)({ command: `node .` });
+    await (0, run_cmd_1.runCmdAsync)({ command: `npx tsc`, path: args.relativePath });
+    await (0, run_cmd_1.runCmdAsync)({ command: `node .`, path: args.relativePath });
     const cloudTypeConfigs = fs.readFileSync(`${args.relativePath}/mnd_temp_build/mnd_compile_logs.txt`).toString();
     console.log(cloudTypeConfigs); //`Cloud Type Configs: ${JSON.stringify(cloudTypeConfigs, null, 2)}`);
     // Extract cloud function code

@@ -1,7 +1,6 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import { getTsFilePathsByType } from '../getTsFilePathsByType';
-import * as TsNode from 'ts-node';
 import { runCmdAsync } from '../utils/run-cmd';
 import { zipDir } from '../utils/zipDir';
 import { MonodeConfig } from '../utils/MonodeConfig';
@@ -19,7 +18,10 @@ export async function performMultistageCompile(args: {
     console.log(`Could not find or could not parse "monode.json".`);
     return;
   }
-  const serverlessPathAbsolute = path.resolve(`./`, monodeConfig.relativeServerlessPath);
+  const serverlessPathAbsolute = path.resolve(
+    path.resolve(`./`, args.relativePath),
+    monodeConfig.relativeServerlessPath,
+  );
 
   // Update tsconfig.json
   const originalTsconfigFileContents = fs.readFileSync(`${args.relativePath}/tsconfig.json`);
@@ -39,16 +41,25 @@ export async function performMultistageCompile(args: {
 
   // Extract cloud config
   const filePathsByFileType = getTsFilePathsByType(args.relativePath);
+  for (let fileType in filePathsByFileType) {
+    for (let i in filePathsByFileType[fileType]) {
+      filePathsByFileType[fileType][i] = `.` + filePathsByFileType[fileType][i].substring(
+        args.relativePath.length,
+        filePathsByFileType[fileType][i].length,
+      );
+    }
+  }
   let getCloudTypes_File = fs.readFileSync(`${__dirname}/index-getCloudTypes.js`).toString();
   getCloudTypes_File = `const FILES_BY_FILE_TYPE = ${JSON.stringify(filePathsByFileType)};\n${getCloudTypes_File.substring(getCloudTypes_File.indexOf('\n'), getCloudTypes_File.length)}`;
   const serverlessJsonPath = path.resolve(serverlessPathAbsolute, `serverless.json`);
   getCloudTypes_File = `const SERVERLESS_PATH = ${JSON.stringify(serverlessJsonPath)};\n` + getCloudTypes_File;
+  console.log(serverlessJsonPath);
   const serverlessConfig = JSON.parse(fs.readFileSync(serverlessJsonPath).toString());
   getCloudTypes_File = `process.env.service = "${serverlessConfig.service}"\n` + getCloudTypes_File;
   getCloudTypes_File = `process.env.stage = "${serverlessConfig.provider.stage}"\n` + getCloudTypes_File;
   fs.writeFileSync(`${args.relativePath}/mnd_temp_build/mnd-index.js`, getCloudTypes_File);
-  await runCmdAsync({ command: `npx tsc`});
-  await runCmdAsync({ command: `node .`});
+  await runCmdAsync({ command: `npx tsc`, path: args.relativePath });
+  await runCmdAsync({ command: `node .`, path: args.relativePath });
   const cloudTypeConfigs = fs.readFileSync(`${args.relativePath}/mnd_temp_build/mnd_compile_logs.txt`).toString();
   console.log(cloudTypeConfigs);//`Cloud Type Configs: ${JSON.stringify(cloudTypeConfigs, null, 2)}`);
 

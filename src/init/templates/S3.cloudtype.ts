@@ -32,10 +32,11 @@ export const S3 = CloudType.defineNew({
 
       putObject: async function(args: { filePath: string, data: BinaryData | string }) {
         const s3 = new AWS.S3();
-        return await (s3.putObject({
+        return (s3.putObject({
           Body: args.data,
           Bucket: bucketName,
           Key: args.filePath,
+          ACL: `bucket-owner-full-control`,
         }).promise());
       },
     };
