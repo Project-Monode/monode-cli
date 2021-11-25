@@ -31,7 +31,7 @@ for (let i in ALL_TS_FILE_PATHS) {
                     allCloudFormationExports.resources[resourceName] = newCloudFormationExports === null || newCloudFormationExports === void 0 ? void 0 : newCloudFormationExports.resources[resourceName];
                 }
                 // @ts-ignore
-                logs += ` + Cloud Component: { ${exportKey} } in "${ALL_TS_FILE_PATHS[i]}".\n`;
+                logs += ` + Cloud Component: { ${exportKey} } in "${ALL_TS_FILE_PATHS[i]}"\n`;
             }
         }
     }
