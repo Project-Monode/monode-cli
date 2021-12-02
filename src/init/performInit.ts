@@ -22,16 +22,16 @@ export async function performInit() {
   fs.mkdirSync(`./src`);
   fs.mkdirSync(`./src/cloud-types`);
   cloneSourceFile({
-    relativeSourceFilePath: `./templates/DynamoDB.cloudtype.ts`,
-    relativeExportPath: `./src/cloud-types/DynamoDB.cloudtype.ts`,
+    relativeSourceFilePath: `./templates/DynamoDB.ts`,
+    relativeExportPath: `./src/cloud-types/DynamoDB.ts`,
   });
   cloneSourceFile({
-    relativeSourceFilePath: `./templates/Lambda.cloudtype.ts`,
-    relativeExportPath: `./src/cloud-types/Lambda.cloudtype.ts`,
+    relativeSourceFilePath: `./templates/Lambda.ts`,
+    relativeExportPath: `./src/cloud-types/Lambda.ts`,
   });
   cloneSourceFile({
-    relativeSourceFilePath: `./templates/S3.cloudtype.ts`,
-    relativeExportPath: `./src/cloud-types/S3.cloudtype.ts`,
+    relativeSourceFilePath: `./templates/S3.ts`,
+    relativeExportPath: `./src/cloud-types/S3.ts`,
   });
   runCmdAsync({ command: 'npm i --save'});
 };

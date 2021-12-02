@@ -12,7 +12,7 @@ const allCloudFormationExports = {
   resources: ({} as any),
 }
 
-let lambdaHandlers_file = `process.env.service = \"${process.env.service}\";\nprocess.env.stage = \"${process.env.stage}\";\n`;
+let lambdaHandlers_file = `process.env.service = \"${process.env.service}\";\nprocess.env.stage = \"${process.env.stage}\";\nprocess.env.region = \"${process.env.region}\";\n`;
 
 // @ts-ignore
 for (let i in ALL_TS_FILE_PATHS) {

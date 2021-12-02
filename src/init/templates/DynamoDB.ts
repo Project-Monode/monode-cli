@@ -1,4 +1,4 @@
-import { CloudType, buildResourceName } from 'monode-serverless';
+import { CloudComponentType, buildResourceName, CloudComponent, defineResourceInteraction } from 'monode-serverless';
 import * as AWS from 'aws-sdk';
 
 /// These are the types that DynamoDB allows to be table keys
@@ -41,14 +41,14 @@ interface DynamoDBKeyConfig<Schema extends DynamoDBSchema<Schema>, Key extends V
 
 
 /// This is how DynamoDBs will be defined
-export const DynamoDB = CloudType.defineNew({
-  cloudTypeName: 'dynamodb',
+export const DynamoDB = CloudComponentType.defineNew({
   defineNew<Schema extends DynamoDBSchema<Schema>, PrimaryKey extends ValidDynamoDBKeyOf<Schema>, SecondaryKey extends Exclude<ValidDynamoDBKeyOf<Schema>, PrimaryKey>>(
     args: {
       schemaType: SchemaType<Schema>
       tableName: string
       primaryKey: DynamoDBKeyConfig<Schema, PrimaryKey>
       secondaryKey?: DynamoDBKeyConfig<Schema, SecondaryKey>
+      extraProperties: { [key: string]: any }
     }
   ) {
     // Generate the json
@@ -70,8 +70,12 @@ export const DynamoDB = CloudType.defineNew({
           ],
           "BillingMode": "PAY_PER_REQUEST",
           "TableName": buildResourceName(args.tableName),
-        }
+        } as { [key: string]: any }
       }
+    }
+    for (let propKey in args.extraProperties) {
+      resources[args.tableName].Properties[propKey]
+        = args.extraProperties[propKey];
     }
   
     // When applicable configue a secondary key
@@ -86,16 +90,25 @@ export const DynamoDB = CloudType.defineNew({
       });
     }
 
-    return {
+    const tableArn = `arn:aws:dynamodb:${process.env.region?.toLowerCase()}:*:table/${args.tableName}`;
+    return CloudComponent.defineNew({
       cloudFormationExports: {
         resources: resources,
       },
-      put: async function(item: Schema) {
-        return await (new AWS.DynamoDB.DocumentClient().put({
-          TableName : buildResourceName(args.tableName),
-          Item: item,
-        }).promise());
-      }
-    };
+      put: defineResourceInteraction({
+        interaction: async function(item: Schema) {
+          return await (new AWS.DynamoDB.DocumentClient().put({
+            TableName : buildResourceName(args.tableName),
+            Item: item,
+          }).promise());
+        },
+        iamPermissions: [{
+          Effect: "Allow",
+          Principal: undefined,
+          Action: 'dynamodb:WriteItem',
+          Resource: tableArn,
+        }],
+      }),
+    });
   }
 });
