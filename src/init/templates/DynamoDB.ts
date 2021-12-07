@@ -110,7 +110,6 @@ export const DynamoDB = CloudComponentType.defineNew({
         // These are the permissions needed to invoke this interaction
         iamPermissions: [{
           Effect: "Allow",
-          Principal: undefined,
           Action: 'dynamodb:WriteItem',
           Resource: tableArn,
         }],

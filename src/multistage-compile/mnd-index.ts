@@ -59,16 +59,7 @@ if (configIsJson) {
   serverlessConfig = YAML.parse(fs.readFileSync(SERVERLESS_PATH).toString());
 }
 
-// Delete the old cloud resources
-let resourcesToDelete: string[] = [];
-for (let resourceName in serverlessConfig.resources?.Resources) {
-  if (resourceName.startsWith(MANAGED_BY_MONODE_TAG)) {
-    resourcesToDelete.push(resourceName);
-  }
-}
-for (let i in resourcesToDelete) {
-  delete serverlessConfig.resources?.Resources[resourcesToDelete[i]];
-}
+// Delete the old functions and resources
 let functionsToDelete: string[] = [];
 for (let functionName in serverlessConfig.functions) {
   if (functionName.startsWith(MANAGED_BY_MONODE_TAG)) {
@@ -78,18 +69,17 @@ for (let functionName in serverlessConfig.functions) {
 for (let i in functionsToDelete) {
   delete serverlessConfig.functions[functionsToDelete[i]];
 }
+let resourcesToDelete: string[] = [];
+for (let resourceName in serverlessConfig.resources?.Resources) {
+  if (resourceName.startsWith(MANAGED_BY_MONODE_TAG)) {
+    resourcesToDelete.push(resourceName);
+  }
+}
+for (let i in resourcesToDelete) {
+  delete serverlessConfig.resources?.Resources[resourcesToDelete[i]];
+}
 
-// Add the new resources
-if (!serverlessConfig.resources) {
-  serverlessConfig.resources = {} as any;
-}
-if (!serverlessConfig.resources.Resources) {
-  serverlessConfig.resources.Resources = {} as any;
-} 
-for (let resourceName in allCloudFormationExports?.resources) {
-  serverlessConfig.resources.Resources[`${MANAGED_BY_MONODE_TAG}${resourceName}`]
-    = allCloudFormationExports?.resources[resourceName];
-}
+// Add the new functions resources
 if (!serverlessConfig.functions) {
   serverlessConfig.functions = {} as any;
 }
@@ -106,8 +96,19 @@ for (let functionName in allCloudFormationExports?.functions) {
   };
   serverlessConfig.functions[`${MANAGED_BY_MONODE_TAG}${functionName}`] = newFunction;
 }
+if (!serverlessConfig.resources) {
+  serverlessConfig.resources = {} as any;
+}
+if (!serverlessConfig.resources.Resources) {
+  serverlessConfig.resources.Resources = {} as any;
+} 
+for (let resourceName in allCloudFormationExports?.resources) {
+  serverlessConfig.resources.Resources[`${MANAGED_BY_MONODE_TAG}${resourceName}`]
+    = allCloudFormationExports?.resources[resourceName];
+}
 
 // Write the serverless config
+serverlessConfig = removeNullValuesFromTemplate(serverlessConfig);
 if (configIsJson) {
   // @ts-ignore
   fs.writeFileSync(SERVERLESS_PATH, JSON.stringify(serverlessConfig, null, 2));
@@ -125,3 +126,23 @@ fs.writeFileSync(`${__dirname}/mnd_lambda_handlers.js`, lambdaHandlers_file);
 
 // Write the logs
 fs.writeFileSync(`${__dirname}/mnd_compile_logs.txt`, logs);
+
+
+
+function removeNullValuesFromTemplate(template: any) {
+  let propsToRemove: string[] = [];
+  for (let i in template) {
+    if (template[i] === undefined || template[i] === null) {
+      propsToRemove.push(i);
+    } else if (
+      Array.isArray(template[i])
+      || template[i] instanceof Object
+    ) {
+      removeNullValuesFromTemplate(template[i]);
+    }
+  }
+  for (let i in propsToRemove) {
+    delete template[propsToRemove[i]];
+  }
+  return template;
+}
