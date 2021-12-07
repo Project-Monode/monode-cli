@@ -1,15 +1,16 @@
 {
   "name": "monode-cli",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "description": "",
   "main": "./build/index.js",
   "types": "./build/index.d.ts",
   "scripts": {
+    "bp": "tsc && npm publish",
     "tsc": "tsc -w"
   },
   "author": "Melchiah Mauck",
   "repository": "https://github.com/Project-Monode/monode-cli",
-  "license": "ISC",
+  "license": "MIT",
   "dependencies": {
     "commander": "^6.2.1",
     "npm": "^8.1.3",

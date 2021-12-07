@@ -2,10 +2,11 @@ import { CloudComponentType, buildResourceName, CloudComponent, defineResourceIn
 import * as AWS from 'aws-sdk';
 
 /// This is how S3s will be defined
-export const S3 = CloudComponentType.defineNew({
+export const S3Bucket = CloudComponentType.defineNew({
   defineNew(args: {
     bucketLabel: string,
-    extraProperties: { [key: string]: any },
+    // Allow the caller to customize this bucket
+    extraProperties?: { [key: string]: any },
   }) {
     const bucketName = buildResourceName(args.bucketLabel);
     const bucketArn = `arn:aws:s3:::${bucketName}`;
@@ -23,6 +24,8 @@ export const S3 = CloudComponentType.defineNew({
         },
       },
     };
+
+    // Add any extra CloudFormation properties
     for (let propKey in args.extraProperties) {
       cloudFormationExports.resources[args.bucketLabel].Properties[propKey]
         = args.extraProperties[propKey];
@@ -30,9 +33,12 @@ export const S3 = CloudComponentType.defineNew({
 
     // Return the cloud component
     return CloudComponent.defineNew({
+      // Define the serverless/CloudFormation config for this resource
       cloudFormationExports: cloudFormationExports,
 
+      // Define a get object interaction
       getObject: defineResourceInteraction({
+        // Call the AWS APIs for this interaction
         interaction: async function(args: { filePath: string }) {
           const s3 = new AWS.S3();
           return await (s3.getObject({
@@ -40,6 +46,8 @@ export const S3 = CloudComponentType.defineNew({
             Key: args.filePath,
            }).promise());
         },
+
+        // These are the permissions needed to invoke this interaction
         iamPermissions: [{
           Effect: "Allow",
           Action: 's3:GetObject',
@@ -47,7 +55,9 @@ export const S3 = CloudComponentType.defineNew({
         }],
       }),
 
+      // Define a put object interaction
       putObject: defineResourceInteraction({
+        // Call the AWS APIs for this interaction
         interaction: async function(args: { filePath: string, data: BinaryData | string }) {
           const s3 = new AWS.S3();
           return (s3.putObject({
@@ -57,6 +67,8 @@ export const S3 = CloudComponentType.defineNew({
             ACL: `bucket-owner-full-control`,
           }).promise());
         },
+
+        // These are the permissions needed to invoke this interaction
         iamPermissions: [{
           Effect: "Allow",
           Action: 's3:PutObject',

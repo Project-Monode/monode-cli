@@ -1,18 +1,27 @@
 import { CloudComponentType, CloudComponent, buildResourceName } from 'monode-serverless';
 
+// Allow a variable number of IAm permissions
 type OneOrMore<SubType> = SubType | SubType[];
 
+// This is the format we need http-triggered lambdas to return
+export interface LambdaHttpResponse<BodyType> {
+  statusCode: number,
+  body: BodyType,
+}
+
+
 /// This is how lambda functions will be defined
-export const Lambda = CloudComponentType.defineNew({
+export const HttpTriggeredLambda = CloudComponentType.defineNew({
   defineNew<ParamType, ReturnType>(args: {
     functionName: string,
-    triggers: string[],
+    httpVerb: string,
     iamPermissions: OneOrMore<{ [key: symbol | string]: any }>[],
     function: (args: ParamType) => Promise<LambdaHttpResponse<ReturnType>>,
   }) {
     const roleName = args.functionName + 'IamRole';
     const policyName = args.functionName + 'IamPolicy';
     const allIamStatements: any[] = [];
+    // Compile the list of permissions for this function
     for (let i in args.iamPermissions) {
       if (Array.isArray(args.iamPermissions[i])) {
         for (let j in args.iamPermissions[i]) {
@@ -22,9 +31,12 @@ export const Lambda = CloudComponentType.defineNew({
         allIamStatements.push(args.iamPermissions[i]);
       }
     }
+
+    // Define the serverless/CloudFormation config for this resource
     return CloudComponent.defineNew({
       function: args.function,
       cloudFormationExports: {
+        // Define the function
         functions: {
           [args.functionName]: {
             handler: undefined,
@@ -34,14 +46,16 @@ export const Lambda = CloudComponentType.defineNew({
               {
                 http:{
                   path: args.functionName,
-                  method: "any",
-                  cors:true,
-                  private:true
+                  method: args.httpVerb,
+                  cors: true,
+                  private: true,
                 }
               }
             ]
           },
         },
+
+        // Define the IAM role for this function
         resources: {
           [roleName]: {
             "Type": "AWS::IAM::Role",
@@ -71,6 +85,9 @@ export const Lambda = CloudComponentType.defineNew({
           }
         }
       },
+
+      // Define what the lambda handler for this function will look like.
+      // Note that the http event is automatically parsed and the result automatically has CORS headers added.
       buildHandlerEntry(args: { functionName: string, filePath: string, }) {
         return `exports.${args.functionName} = async (event, context, callback) => {
   event = JSON.parse(event.body);
@@ -89,8 +106,3 @@ export const Lambda = CloudComponentType.defineNew({
     });
   }
 });
-
-export interface LambdaHttpResponse<BodyType> {
-  statusCode: number,
-  body: BodyType,
-}

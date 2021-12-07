@@ -1,5 +1,5 @@
 "use strict";
-var _a, _b, _c;
+var _a, _b, _c, _d, _e;
 Object.defineProperty(exports, "__esModule", { value: true });
 const fs = require("fs");
 const MANAGED_BY_MONODE_TAG = 'MONODE';
@@ -45,13 +45,13 @@ for (let i in ALL_TS_FILE_PATHS) {
 let serverlessConfig = JSON.parse(fs.readFileSync(SERVERLESS_PATH).toString());
 // Delete the old cloud resources
 let resourcesToDelete = [];
-for (let resourceName in serverlessConfig.resources.Resources) {
+for (let resourceName in (_d = serverlessConfig.resources) === null || _d === void 0 ? void 0 : _d.Resources) {
     if (resourceName.startsWith(MANAGED_BY_MONODE_TAG)) {
         resourcesToDelete.push(resourceName);
     }
 }
 for (let i in resourcesToDelete) {
-    delete serverlessConfig.resources.Resources[resourcesToDelete[i]];
+    (_e = serverlessConfig.resources) === null || _e === void 0 ? true : delete _e.Resources[resourcesToDelete[i]];
 }
 let functionsToDelete = [];
 for (let functionName in serverlessConfig.functions) {
@@ -63,9 +63,18 @@ for (let i in functionsToDelete) {
     delete serverlessConfig.functions[functionsToDelete[i]];
 }
 // Add the new resources
+if (!serverlessConfig.resources) {
+    serverlessConfig.resources = {};
+}
+if (!serverlessConfig.resources.Resources) {
+    serverlessConfig.resources.Resources = {};
+}
 for (let resourceName in allCloudFormationExports === null || allCloudFormationExports === void 0 ? void 0 : allCloudFormationExports.resources) {
     serverlessConfig.resources.Resources[`${MANAGED_BY_MONODE_TAG}${resourceName}`]
         = allCloudFormationExports === null || allCloudFormationExports === void 0 ? void 0 : allCloudFormationExports.resources[resourceName];
+}
+if (!serverlessConfig.functions) {
+    serverlessConfig.functions = {};
 }
 for (let functionName in allCloudFormationExports === null || allCloudFormationExports === void 0 ? void 0 : allCloudFormationExports.functions) {
     let newFunction = allCloudFormationExports === null || allCloudFormationExports === void 0 ? void 0 : allCloudFormationExports.functions[functionName];

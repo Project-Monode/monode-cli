@@ -28,12 +28,30 @@ async function performInit() {
         relativeExportPath: `./src/cloud-types/DynamoDB.ts`,
     });
     cloneSourceFile({
-        relativeSourceFilePath: `./templates/Lambda.ts`,
-        relativeExportPath: `./src/cloud-types/Lambda.ts`,
+        relativeSourceFilePath: `./templates/HttpTriggeredLambda.ts`,
+        relativeExportPath: `./src/cloud-types/HttpTriggeredLambda.ts`,
     });
     cloneSourceFile({
-        relativeSourceFilePath: `./templates/S3.ts`,
-        relativeExportPath: `./src/cloud-types/S3.ts`,
+        relativeSourceFilePath: `./templates/S3Bucket.ts`,
+        relativeExportPath: `./src/cloud-types/S3Bucket.ts`,
+    });
+    fs.mkdirSync(`./src/contact-book-microservice`);
+    cloneSourceFile({
+        relativeSourceFilePath: `./templates/ContactsTable.ts`,
+        relativeExportPath: `./src/contact-book-microservice/ContactsTable.ts`,
+    });
+    cloneSourceFile({
+        relativeSourceFilePath: `./templates/createContact.ts`,
+        relativeExportPath: `./src/contact-book-microservice/createContact.ts`,
+    });
+    fs.mkdirSync(`./src/more-examples`);
+    cloneSourceFile({
+        relativeSourceFilePath: `./templates/ExampleS3Bucket.ts`,
+        relativeExportPath: `./src/more-examples/ExampleS3Bucket.ts`,
+    });
+    cloneSourceFile({
+        relativeSourceFilePath: `./templates/ExampleStandAloneComponent.ts`,
+        relativeExportPath: `./src/more-examples/ExampleStandAloneComponent.ts`,
     });
     (0, run_cmd_1.runCmdAsync)({ command: 'npm i --save' });
 }

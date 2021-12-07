@@ -52,13 +52,13 @@ let serverlessConfig = JSON.parse(fs.readFileSync(SERVERLESS_PATH).toString());
 
 // Delete the old cloud resources
 let resourcesToDelete: string[] = [];
-for (let resourceName in serverlessConfig.resources.Resources) {
+for (let resourceName in serverlessConfig.resources?.Resources) {
   if (resourceName.startsWith(MANAGED_BY_MONODE_TAG)) {
     resourcesToDelete.push(resourceName);
   }
 }
 for (let i in resourcesToDelete) {
-  delete serverlessConfig.resources.Resources[resourcesToDelete[i]];
+  delete serverlessConfig.resources?.Resources[resourcesToDelete[i]];
 }
 let functionsToDelete: string[] = [];
 for (let functionName in serverlessConfig.functions) {
@@ -71,9 +71,18 @@ for (let i in functionsToDelete) {
 }
 
 // Add the new resources
+if (!serverlessConfig.resources) {
+  serverlessConfig.resources = {} as any;
+}
+if (!serverlessConfig.resources.Resources) {
+  serverlessConfig.resources.Resources = {} as any;
+} 
 for (let resourceName in allCloudFormationExports?.resources) {
   serverlessConfig.resources.Resources[`${MANAGED_BY_MONODE_TAG}${resourceName}`]
     = allCloudFormationExports?.resources[resourceName];
+}
+if (!serverlessConfig.functions) {
+  serverlessConfig.functions = {} as any;
 }
 for (let functionName in allCloudFormationExports?.functions) {
   let newFunction = allCloudFormationExports?.functions[functionName];
