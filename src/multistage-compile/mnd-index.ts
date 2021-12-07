@@ -1,4 +1,5 @@
 import * as fs from 'fs';
+const YAML = require('yamljs');
 const MANAGED_BY_MONODE_TAG = 'MONODE';
 
 const trimTsExtension = function(tsFilePath: string): string {
@@ -46,9 +47,17 @@ for (let i in ALL_TS_FILE_PATHS) {
 }
 
 
-// @ts-ignore
 // Read in the serverless config
-let serverlessConfig = JSON.parse(fs.readFileSync(SERVERLESS_PATH).toString());
+let serverlessConfig: any;
+// @ts-ignore
+let configIsJson = SERVERLESS_PATH.endsWith('json');
+if (configIsJson) {
+  // @ts-ignore
+  serverlessConfig = JSON.parse(fs.readFileSync(SERVERLESS_PATH).toString());
+} else {
+  // @ts-ignore
+  serverlessConfig = YAML.parse(fs.readFileSync(SERVERLESS_PATH).toString());
+}
 
 // Delete the old cloud resources
 let resourcesToDelete: string[] = [];
@@ -97,8 +106,15 @@ for (let functionName in allCloudFormationExports?.functions) {
   };
   serverlessConfig.functions[`${MANAGED_BY_MONODE_TAG}${functionName}`] = newFunction;
 }
-// @ts-ignore
-fs.writeFileSync(SERVERLESS_PATH, JSON.stringify(serverlessConfig, null, 2));
+
+// Write the serverless config
+if (configIsJson) {
+  // @ts-ignore
+  fs.writeFileSync(SERVERLESS_PATH, JSON.stringify(serverlessConfig, null, 2));
+} else {
+  // @ts-ignore
+  fs.writeFileSync(SERVERLESS_PATH, YAML.stringify(serverlessConfig, 1024, 2));
+}
 
 
 

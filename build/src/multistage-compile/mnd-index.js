@@ -2,6 +2,7 @@
 var _a, _b, _c, _d, _e;
 Object.defineProperty(exports, "__esModule", { value: true });
 const fs = require("fs");
+const YAML = require('yamljs');
 const MANAGED_BY_MONODE_TAG = 'MONODE';
 const trimTsExtension = function (tsFilePath) {
     return tsFilePath.substring(0, tsFilePath.length - 3);
@@ -40,9 +41,18 @@ for (let i in ALL_TS_FILE_PATHS) {
         logs += ` ! ERROR when reading in cloud component config "${ALL_TS_FILE_PATHS[i]}": ${e.toString()}\n`;
     }
 }
-// @ts-ignore
 // Read in the serverless config
-let serverlessConfig = JSON.parse(fs.readFileSync(SERVERLESS_PATH).toString());
+let serverlessConfig;
+// @ts-ignore
+let configIsJson = SERVERLESS_PATH.endsWith('json');
+if (configIsJson) {
+    // @ts-ignore
+    serverlessConfig = JSON.parse(fs.readFileSync(SERVERLESS_PATH).toString());
+}
+else {
+    // @ts-ignore
+    serverlessConfig = YAML.parse(fs.readFileSync(SERVERLESS_PATH).toString());
+}
 // Delete the old cloud resources
 let resourcesToDelete = [];
 for (let resourceName in (_d = serverlessConfig.resources) === null || _d === void 0 ? void 0 : _d.Resources) {
@@ -89,8 +99,15 @@ for (let functionName in allCloudFormationExports === null || allCloudFormationE
     };
     serverlessConfig.functions[`${MANAGED_BY_MONODE_TAG}${functionName}`] = newFunction;
 }
-// @ts-ignore
-fs.writeFileSync(SERVERLESS_PATH, JSON.stringify(serverlessConfig, null, 2));
+// Write the serverless config
+if (configIsJson) {
+    // @ts-ignore
+    fs.writeFileSync(SERVERLESS_PATH, JSON.stringify(serverlessConfig, null, 2));
+}
+else {
+    // @ts-ignore
+    fs.writeFileSync(SERVERLESS_PATH, YAML.stringify(serverlessConfig, 1024, 2));
+}
 // Export the lambda handlers file
 fs.writeFileSync(`${__dirname}/mnd_lambda_handlers.js`, lambdaHandlers_file);
 // Write the logs

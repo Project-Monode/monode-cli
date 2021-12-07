@@ -6,11 +6,14 @@ const path = require("path");
 const getAllTsFilesInDirectory_1 = require("../utils/getAllTsFilesInDirectory");
 const run_cmd_1 = require("../utils/run-cmd");
 const zipDir_1 = require("../utils/zipDir");
+const getServerlessConfigFilePath_1 = require("../utils/getServerlessConfigFilePath");
+const YAML = require("yamljs");
 exports.CLOUD_TYPE_NAME = 'cloudtype';
 async function performMultistageCompile(args) {
     if (!args.relativePath) {
         args.relativePath = './';
     }
+    const npm = require('npm-commands');
     // Read in the Monode config
     let monodeConfig;
     try {
@@ -34,7 +37,12 @@ async function performMultistageCompile(args) {
     const originalPackageFileContents = fs.readFileSync(`${args.relativePath}/package.json`);
     let tempPackageJson = JSON.parse(originalPackageFileContents.toString());
     tempPackageJson.main = `${args.relativePath}/mnd_temp_build/mnd-index.js`;
+    if (!tempPackageJson.dependencies) {
+        tempPackageJson.dependencies = {};
+    }
+    tempPackageJson.dependencies['yamljs'] = '^0.3.0';
     fs.writeFileSync(`${args.relativePath}/package.json`, JSON.stringify(tempPackageJson));
+    await npm().cwd(`${args.relativePath}/`).install();
     // Extract cloud config
     let tsFilePaths = (0, getAllTsFilesInDirectory_1.getAllTsFilesInDirectory)(args.relativePath);
     for (let i in tsFilePaths) {
@@ -42,10 +50,25 @@ async function performMultistageCompile(args) {
     }
     let getCloudTypes_File = fs.readFileSync(`${__dirname}/mnd-index.js`).toString();
     getCloudTypes_File = `const ALL_TS_FILE_PATHS = ${JSON.stringify(tsFilePaths)};\n${getCloudTypes_File.substring(getCloudTypes_File.indexOf('\n'), getCloudTypes_File.length)}`;
-    const serverlessJsonPath = path.resolve(serverlessPathAbsolute, `serverless.json`);
-    getCloudTypes_File = `const SERVERLESS_PATH = ${JSON.stringify(serverlessJsonPath)};\n` + getCloudTypes_File;
-    console.log(`Exporting to "${serverlessJsonPath}"`);
-    const serverlessConfig = JSON.parse(fs.readFileSync(serverlessJsonPath).toString());
+    let serverlessConfigPath;
+    try {
+        serverlessConfigPath = (0, getServerlessConfigFilePath_1.getServerlessConfigFilePath)(serverlessPathAbsolute);
+    }
+    catch (e) {
+        console.log(`Error! Could not find a serverless config file in "${serverlessPathAbsolute}"! Check your monode.json file.`);
+        return;
+    }
+    getCloudTypes_File = `const SERVERLESS_PATH = ${JSON.stringify(serverlessConfigPath)};\n` + getCloudTypes_File;
+    console.log(`Exporting to "${serverlessConfigPath}"`);
+    // Read in the serverless config
+    let serverlessConfig;
+    if (serverlessConfigPath.endsWith('json')) {
+        serverlessConfig = JSON.parse(fs.readFileSync(serverlessConfigPath).toString());
+    }
+    else {
+        // @ts-ignore
+        serverlessConfig = YAML.parse(fs.readFileSync(serverlessConfigPath).toString());
+    }
     getCloudTypes_File = `process.env.service = "${serverlessConfig.service}"\n` + getCloudTypes_File;
     getCloudTypes_File = `process.env.stage = "${serverlessConfig.provider.stage}"\n` + getCloudTypes_File;
     getCloudTypes_File = `process.env.region = "${serverlessConfig.provider.region}"\n` + getCloudTypes_File;
@@ -58,7 +81,6 @@ async function performMultistageCompile(args) {
     fs.unlinkSync(`${args.relativePath}/mnd_temp_build/mnd-index.js`);
     fs.unlinkSync(`${args.relativePath}/mnd_temp_build/mnd_compile_logs.txt`);
     fs.writeFileSync(`${args.relativePath}/mnd_temp_build/package.json`, JSON.stringify({ dependencies: tempPackageJson === null || tempPackageJson === void 0 ? void 0 : tempPackageJson.dependencies }, null, 2));
-    const npm = require('npm-commands');
     await npm().cwd(`${args.relativePath}/mnd_temp_build/`).install();
     if (fs.existsSync(`${args.relativePath}/mnd_temp_build/package.json`)) {
         fs.unlinkSync(`${args.relativePath}/mnd_temp_build/package.json`);
@@ -75,5 +97,6 @@ async function performMultistageCompile(args) {
     fs.rmdirSync(`${args.relativePath}/mnd_temp_build`, { recursive: true });
     fs.writeFileSync(`${args.relativePath}/package.json`, originalPackageFileContents);
     fs.writeFileSync(`${args.relativePath}/tsconfig.json`, originalTsconfigFileContents);
+    await npm().cwd(`${args.relativePath}/`).install();
 }
 exports.performMultistageCompile = performMultistageCompile;
